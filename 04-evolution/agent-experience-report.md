@@ -20,58 +20,61 @@
 
 | Campo | Valor |
 |---|---|
-| **Time** | `<!-- preencher -->` |
-| **Data** | `<!-- YYYY-MM-DD -->` |
-| **Edição** | `<!-- preencher -->` |
+| **Time** | Luis Lourenço |
+| **Data** | 2026-09-10 |
+| **Edição** | Imersão SERPRO Fortaleza |
 | **Participantes** | `<!-- listar integrantes -->` |
+
+> [!NOTE]
+> As seções 1, 2 e 5 estão preenchidas com o que foi observado e verificado. As seções de julgamento (3, 4, 6, 7, 8, 9) ficam para o time preencher em conjunto — nota e opinião não se delegam.
 
 ---
 
 ## 1. Issues criadas
 
-### Issue 1
+Nove issues no total: cinco escritas antes da rodada de operação (#1 a #5) e quatro derivadas da revisão de infraestrutura e da revisão de PR (#8 a #11).
 
-| Campo | Valor |
-|---|---|
-| **Título** | `<!-- preencher -->` |
-| **Link** | `<!-- URL da Issue no GitHub -->` |
-| **Descrição breve** | `<!-- uma a duas frases -->` |
-| **Tempo para escrever a Issue** | `___ min` |
-
-### Issue 2
-
-| Campo | Valor |
-|---|---|
-| **Título** | `<!-- preencher -->` |
-| **Link** | `<!-- URL da Issue no GitHub -->` |
-| **Descrição breve** | `<!-- uma a duas frases -->` |
-| **Tempo para escrever a Issue** | `___ min` |
+| # | Título | Origem |
+|---|---|---|
+| [#1](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/1) | Ligar o cadastro de descontos ao ciclo da folha | `SIFAP-M-08` |
+| [#2](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/2) | Particionar a tabela payment por reference_period | ADR-001 |
+| [#3](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/3) | Criar o comparador de remessa para a execução em sombra | ADR-004 |
+| [#4](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/4) | Adicionar portões de segurança ao CI | lacuna de controle |
+| [#5](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/5) | Decidir as 3 regras legadas bloqueadas | `SIFAP-M-09`, `M-14`, `M-20` |
+| [#8](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/8) | Rede privada para PostgreSQL e Key Vault | constatação do Checkov |
+| [#9](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/9) | Rotacionar segredos antes de definir expiração | constatação do Checkov |
+| [#10](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/10) | Reconciliar CodeQL: default setup bloqueia config avançada | falha real do workflow |
+| [#11](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/issues/11) | Copilot Agent usa branch padrão errada | revisão das PRs #6 e #7 |
 
 ---
 
 ## 2. PRs gerados pelo Agent
 
-### PR 1 (da Issue 1)
+Duas PRs abertas pelo `copilot-swe-agent`. **Nenhuma produziu código.**
+
+### PR #6 (da Issue #4)
 
 | Campo | Valor |
 |---|---|
-| **Link** | `<!-- URL do PR -->` |
-| **Tempo gasto pelo Agent** | `___ min` |
-| **Arquivos modificados** | `___` |
-| **Testes criados** | Sim / Não |
-| **Exigiu alterações manuais** | Sim / Não |
-| **Merge realizado** | Sim / Não |
+| **Link** | [#6](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/pull/6) — `[WIP] Add security gates to CI for CodeQL and dependency checks` |
+| **Base** | `portugues-br` (branch padrão) |
+| **Arquivos modificados** | 0 |
+| **Testes criados** | Não |
+| **Exigiu alterações manuais** | Não se aplica — não houve entrega |
+| **Merge realizado** | Não — fechada |
 
-### PR 2 (da Issue 2)
+### PR #7 (da Issue #1)
 
 | Campo | Valor |
 |---|---|
-| **Link** | `<!-- URL do PR -->` |
-| **Tempo gasto pelo Agent** | `___ min` |
-| **Arquivos modificados** | `___` |
-| **Testes criados** | Sim / Não |
-| **Exigiu alterações manuais** | Sim / Não |
-| **Merge realizado** | Sim / Não |
+| **Link** | [#7](https://github.com/serpro-workshop-fortaleza/sifap-modernization-luislourenco/pull/7) — `Report blocked implementation: backend module missing from working tree` |
+| **Base** | `portugues-br` (branch padrão) |
+| **Arquivos modificados** | 0 |
+| **Testes criados** | Não |
+| **Exigiu alterações manuais** | Não se aplica — não houve entrega |
+| **Merge realizado** | Não — fechada |
+
+**Causa comum:** o Copilot Agent usa a branch padrão do repositório como base. Ela é `portugues-br`, onde `backend/` não existe — o código está só em `develop`. O bloco "Base branch: `develop`" escrito no corpo das issues **não altera** esse comportamento. Registrado na issue #11.
 
 ---
 
@@ -99,9 +102,12 @@
 
 > Em que pontos o Agent errou, entendeu mal a tarefa ou produziu código inadequado?
 
-1. `<!-- preencher -->`
-2. `<!-- preencher -->`
-3. `<!-- preencher -->`
+1. **Nenhuma das duas PRs entregou código.** As duas nasceram com base em `portugues-br` e pararam por falta do módulo `backend/`. O problema é de configuração de delegação, não de capacidade do agente — issue #11.
+2. **A instrução de branch no corpo da issue não teve efeito.** As issues diziam de forma explícita "não use a branch padrão". O agente não pode obedecer: a base vem da configuração do repositório.
+3. **`<!-- preencher: houve mais alguma falha observada pelo time? -->`**
+
+> [!NOTE]
+> A salvaguarda escrita nas issues ("se `backend/pom.xml` não existir, pare e reporte em vez de criar o projeto do zero") **funcionou**. A PR #7 se chama literalmente `Report blocked implementation`. O agente parou e reportou em vez de alucinar um projeto inteiro — que era exatamente o comportamento desejado.
 
 ### Tipos de falha encontrados
 
@@ -112,7 +118,7 @@
 - [ ] Lógica de negócio incorreta
 - [ ] Tratamento de erros ausente
 - [ ] Credenciais ou dados sensíveis no código
-- [ ] Outro: `___`
+- [x] Outro: nenhum código foi produzido — base de trabalho errada por configuração do repositório
 
 ---
 
@@ -147,8 +153,8 @@ Escala: 1 = Inadequado, 2 = Abaixo das expectativas, 3 = Aceitável, 4 = Bom, 5 
 
 > Se outro time fosse usar o Agent pela primeira vez, o que vocês diriam?
 
-1. `<!-- preencher -->`
-2. `<!-- preencher -->`
+1. **Confira a branch padrão antes de atribuir qualquer issue ao agente.** Ele trabalha a partir dela, e nenhum texto no corpo da issue muda isso. Foi o que custou as duas PRs desta rodada.
+2. **Escreva a salvaguarda de parada na issue.** A frase "se o arquivo X não existir, pare e reporte em vez de criar do zero" evitou que o agente inventasse um projeto inteiro. Custou uma linha.
 3. `<!-- preencher -->`
 
 ---
