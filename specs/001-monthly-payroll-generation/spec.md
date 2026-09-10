@@ -106,23 +106,26 @@ Geração da folha para um período `YYYYMM`: seleção de beneficiários ativos
 **REQ-006** — QUANDO um beneficiário for selecionado, o sistema DEVE validar o CPF por módulo 11 antes de qualquer cálculo.
 
 - **Padrão EARS:** Evento
-- `source_legacy: 01-archaeology/legacy-sifap/natural-programs/SUBVALCP.NSN:70-80`
+- `source_legacy: 01-archaeology/legacy-sifap/natural-programs/CCVALCPF.NSC:92-128`
 - **Critérios de aceitação:**
   - CPF com dígito verificador incorreto é rejeitado.
   - CPF com caractere não numérico é rejeitado.
+  - O 1º dígito usa pesos 10 a 2 sobre os 9 primeiros; o 2º usa pesos 11 a 2 sobre os 10 primeiros.
+  - Resto da divisão por 11 menor que 2 produz dígito verificador `0`.
   - O beneficiário rejeitado entra no registro de rejeitados e não gera pagamento.
+- **Nota:** `SUBVALCP.NSN:70-80` é apenas o invocador; o algoritmo vive no copycode `CCVALCPF.NSC`, incluído em tempo de compilação por `SUBVALCP.NSN:94`. Ver [ADR-005](../../02-modern-spec/adr/ADR-005-validacao-canonica-de-cpf.md) para a escolha da variante canônica.
 
 ---
 
 **REQ-007** — O sistema DEVE tratar CPF com todos os dígitos iguais como inválido, incluindo `00000000000`.
 
 - **Padrão EARS:** Ubíquo
-- `source_legacy: 01-archaeology/legacy-sifap/natural-programs/SUBVALCP.NSN:57-60`
+- `source_legacy: 01-archaeology/legacy-sifap/natural-programs/CCVALCPF.NSC:79-90`
 - `blocked_by: SIFAP-M-14`
 - **Critérios de aceitação:**
   - `00000000000` é rejeitado.
   - `11111111111` é rejeitado.
-- **Conflito registrado:** `VALBENEF.NSN:239-242` aceita explicitamente sequências iniciadas em `000` como "CPF de teste de governo". Esta especificação adota a regra restritiva de `SUBVALCP` por ser a rotina declarada como fonte única (`SUBVALCP.NSN:8`). **A decisão exige confirmação humana antes da implementação**, pois pode excluir registros existentes na base.
+- **Conflito registrado:** o acervo contém **quatro** implementações de módulo 11 que discordam entre si. `CCVALCPF.NSC:79-90` rejeita sempre; `VALBENEF.NSN:238-242` abre exceção para sequências iniciadas em `000`; `CADBENEF.NSP:344-413` e `VALDOCS.NSP:137-199` **não verificam dígitos iguais**. Esta especificação adota a regra restritiva do copycode, cujo cabeçalho o declara padrão corporativo NT-SUPDE-014 (`CCVALCPF.NSC:9`) e registra que as cópias **não são equivalentes** (`CCVALCPF.NSC:32-37`, ticket 6620/2011 em aberto). **A decisão exige confirmação humana antes da implementação**, pois pode excluir registros existentes na base. Ver [ADR-005](../../02-modern-spec/adr/ADR-005-validacao-canonica-de-cpf.md).
 
 ---
 
@@ -365,7 +368,7 @@ Geração da folha para um período `YYYYMM`: seleção de beneficiários ativos
 | Origem legada | Requisitos derivados |
 |---|---|
 | `BATCHPGT.NSP` | REQ-001 a REQ-005, REQ-028 a REQ-031 |
-| `SUBVALCP.NSN` | REQ-006, REQ-007 |
+| `CCVALCPF.NSC` | REQ-006, REQ-007 |
 | `VALELEG.NSN` | REQ-008 a REQ-015 |
 | `CALCBENF.NSN` | REQ-016 a REQ-021, REQ-027 |
 | `CALCDSCT.NSP` | REQ-022 a REQ-026 |
@@ -382,7 +385,7 @@ Os três requisitos abaixo **não podem ser implementados** antes de validação
 
 | Requisito | Mistério | Quem decide |
 |---|---|---|
-| REQ-007 | `SIFAP-M-14` — dois validadores de CPF discordam | Coordenação de Benefícios |
+| REQ-007 | `SIFAP-M-14` — quatro validadores de CPF discordam | Coordenação de Benefícios |
 | REQ-015 | `SIFAP-M-09` — região 99 ignora todas as verificações | Coordenação de Benefícios |
 | REQ-021 | `SIFAP-M-20` — tabela de fator regional indexada de forma inconsistente | Coordenação de Benefícios |
 
@@ -394,6 +397,7 @@ Os três requisitos abaixo **não podem ser implementados** antes de validação
 - [ADR-002 — Fonte única de cálculo do benefício](../../02-modern-spec/adr/ADR-002-fonte-unica-de-calculo.md)
 - [ADR-003 — Representação monetária e truncamento](../../02-modern-spec/adr/ADR-003-representacao-monetaria.md)
 - [ADR-004 — Coexistência com o legado por Strangler Fig](../../02-modern-spec/adr/ADR-004-coexistencia-strangler-fig.md)
+- [ADR-005 — Validação canônica de CPF no shared kernel](../../02-modern-spec/adr/ADR-005-validacao-canonica-de-cpf.md)
 
 ---
 

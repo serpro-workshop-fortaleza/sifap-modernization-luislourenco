@@ -131,20 +131,54 @@
 
 ---
 
+## Regras de `CCVALCPF.NSC` — rotina padrão de CPF (módulo 11)
+
+Copycode que fornece a sub-rotina `VALID-CPF-STANDARD`. Entrada `#CPF-STR (A11)`, saída `#CPF-OK (L)`. Incluído por `SUBVALCP.NSN:94` e `CADDEPEN.NSP:230`.
+
+| # | Enunciado da regra | Candidato EARS | Origem | Classificação | Notas |
+|---|---|---|---|---|---|
+| 54 | O CPF é presumido válido no início e só é invalidado por uma verificação que falhe | Ubíquo | `CCVALCPF.NSC:41-42` | Inferida | `MOVE TRUE TO #CPF-OK` antes de qualquer teste; qualquer caminho não coberto devolve "válido" |
+| 55 | Se o CPF não tiver exatamente 11 caracteres numéricos, então o sistema deve rejeitá-lo | Indesejado | `CCVALCPF.NSC:45-48` | Inferida | `MASK(NNNNNNNNNNN)`; brancos e sinais são rejeitados aqui |
+| 56 | Se qualquer posição do CPF não for um dígito de 0 a 9, então o sistema deve rejeitá-lo | Indesejado | `CCVALCPF.NSC:51-77` | Inferida | Ramo `NONE VALUE` do `DECIDE`; redundante com a regra 55 |
+| 57 | Se todos os 11 dígitos forem iguais, então o sistema deve rejeitar o CPF | Indesejado | `CCVALCPF.NSC:79-90` | Inferida | Adicionada em 17/05/2005 (`:6`); **sem exceção para `000`** — contrasta com `VALBENEF.NSN:238-242` |
+| 58 | O 1º dígito verificador é o resto de 11 na soma dos 9 primeiros dígitos com pesos 10 a 2 | Ubíquo | `CCVALCPF.NSC:92-105` | Confirmada | `BUSINESS-RULES-2012.md:72` (RN-001) exige dígito verificador, sem detalhar a fórmula |
+| 59 | O 2º dígito verificador é o resto de 11 na soma dos 10 primeiros dígitos com pesos 11 a 2 | Ubíquo | `CCVALCPF.NSC:111-125` | Confirmada | `BUSINESS-RULES-2012.md:72` (RN-001) |
+| 60 | Quando o resto da divisão por 11 for menor que 2, o dígito verificador é 0 | Ubíquo | `CCVALCPF.NSC:101-105`, `:121-125` | Inferida | Convenção padrão de CPF, mas não documentada no acervo |
+| 61 | Se qualquer dígito verificador calculado divergir do informado, então o sistema deve rejeitar o CPF | Indesejado | `CCVALCPF.NSC:106-109`, `:126-128` | Inferida | O 1º dígito faz `ESCAPE ROUTINE`; o 2º apenas marca `#CPF-OK` e cai no fim da sub-rotina |
+| 62 | Quando o CPF de um dependente for inválido, o sistema deve apenas exibir aviso e concluir a inclusão | Indesejado | `CADDEPEN.NSP:162-171` | Inferida | "WARNING MODE" declarado no comentário; `#ERR` não é marcado — ver `BONUS` |
+
+> [!NOTE]
+> As regras 54 a 57, 60 e 61 estão marcadas como **Inferidas**: têm evidência literal no código, mas nenhuma seção da documentação em `legacy-docs/` as corrobora. A única referência documental a CPF é `BUSINESS-RULES-2012.md:72` (RN-001), que cita um subprograma `VALCPF` inexistente no acervo — o membro disponível chama-se `SUBVALCP.NSN`.
+
+### Divergência entre as quatro implementações de módulo 11
+
+O cabeçalho do próprio copycode declara que as cópias **não são equivalentes** (`CCVALCPF.NSC:32-37`, ticket 6620/2011 em aberto). Comparação linha a linha:
+
+| Implementação | Máscara numérica | Dígitos iguais | Resto da divisão | Origem |
+|---|---|---|---|---|
+| `VALID-CPF-STANDARD` (padrão) | Sim | Rejeita sempre | `DIVIDE ... REMAINDER` | `CCVALCPF.NSC:39-130` |
+| `VALID-CPF` | Não | **Sem verificação** | `#SUM - ((#SUM / 11) * 11)` | `CADBENEF.NSP:344-413` |
+| `VALID-CPF-COMPLETE` | Não | Rejeita, **exceto início `000`** | `#SUM - ((#SUM / 11) * 11)` | `VALBENEF.NSN:196-276` |
+| `VALID-CPF-DOC` | Não (rejeita `#CPF = 0`) | **Sem verificação** | `#SUM - ((#SUM / 11) * 11)` | `VALDOCS.NSP:137-199` |
+
+Consumidores do copycode: `SUBVALCP.NSN:94` e `CADDEPEN.NSP:230`. `CADBENEF.NSP`, `VALBENEF.NSN` e `VALDOCS.NSP` mantêm cópias inline.
+
+---
+
 ## Resumo geral
 
 | Métrica | Valor |
 |---|---:|
-| Membros Natural lidos | 22 de 24 |
+| Membros Natural lidos | 23 de 24 |
 | DDMs cruzados | 4 de 4 |
-| Regras confirmadas | 53 |
-| Regras inferidas | 0 |
-| Mistérios | 20 canônicos + 5 bônus |
+| Regras confirmadas | 55 |
+| Regras inferidas | 7 |
+| Mistérios | 20 canônicos + 8 bônus |
 
-> Nenhuma regra foi classificada como "Inferida": todas as 53 têm evidência literal no código. As incertezas foram registradas como mistérios em [`mysteries-found.md`](mysteries-found.md), não como regras.
+> As 55 regras confirmadas têm evidência literal no código **e** correspondência na documentação histórica. As 7 inferidas (54-57, 60-62) têm evidência literal no código, mas nenhuma seção de `legacy-docs/` que as corrobore — não devem ser tratadas como fato até validação humana. As incertezas foram registradas como mistérios em [`mysteries-found.md`](mysteries-found.md), não como regras.
 
 > [!WARNING]
-> **Dois membros ainda não lidos:** `CCVALCPF.NSC` (copycode de módulo 11 incluído por `SUBVALCP.NSN:96`) e `SIFAPJ02.jcl` (job de relatórios). Nenhuma regra deste catálogo depende deles, mas `CCVALCPF` contém a implementação real do dígito verificador que sustenta REQ-006 — leitura obrigatória antes do Estágio 3.
+> **Um membro ainda não lido:** `SIFAPJ02.jcl` (job de relatórios). `CCVALCPF.NSC` foi lido e catalogado nas regras 54-61; a leitura revelou que a rotina "padrão" convive com três cópias inline divergentes — ver a tabela de divergência acima e os mistérios `BONUS` correspondentes.
 
 ---
 

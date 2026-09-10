@@ -122,7 +122,7 @@ Onde a resposta foi não, a fronteira foi movida — não negociada.
 | **Responsabilidade** | Validação de CPF e NIS por módulo 11; tipos monetários e de período |
 | **Dados sob sua responsabilidade** | Nenhum — funções puras e objetos de valor |
 | **Interface pública** | `Cpf.of(String)`, `Nis.of(String)`, `Money`, `ReferencePeriod` |
-| **Por que não é um contexto** | Sem estado e sem dono. Consolidar aqui resolve as **três** implementações divergentes de módulo 11 registradas no bônus de `mysteries-found.md` |
+| **Por que não é um contexto** | Sem estado e sem dono. Consolidar aqui resolve as **quatro** implementações divergentes de módulo 11 registradas nos bônus de `mysteries-found.md` — ver [ADR-005](adr/ADR-005-validacao-canonica-de-cpf.md) |
 
 ---
 
