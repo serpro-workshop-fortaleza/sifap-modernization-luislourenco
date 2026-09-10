@@ -20,53 +20,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  codeql:
-    name: CodeQL (${{ matrix.language }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: java-kotlin
-            build-mode: manual
-          - language: actions
-            build-mode: none
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      - name: Configurar JDK 21
-        if: matrix.language == 'java-kotlin'
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
-
-      - name: Inicializar CodeQL
-        uses: github/codeql-action/init@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3
-        with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
-          queries: security-extended
-
-      # `build-mode: manual` porque o autobuild não conhece o enforcer de JDK 21 do
-      # pom.xml. Pular os testes: o CodeQL analisa o bytecode de produção, e `ci.yml`
-      # já é o portão que executa a suíte.
-      - name: Compilar o backend
-        if: matrix.language == 'java-kotlin'
-        working-directory: backend
-        run: |
-          set -euo pipefail
-          ./mvnw -B -DskipTests package
-
-      - name: Analisar
-        uses: github/codeql-action/analyze@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3
-        with:
-          category: "/language:${{ matrix.language }}"
+  # CodeQL não entra aqui: o repositório usa o "default setup" de code scanning, e o
+  # GitHub recusa o SARIF de configuração avançada enquanto ele estiver ligado
+  # ("CodeQL analyses from advanced configurations cannot be processed when the
+  # default setup is enabled"). Um job permanentemente vermelho é pior que nenhum.
+  # Reconciliação pendente na issue #10 — exige permissão de admin.
 
   dependency-review:
     name: Revisão de dependências
