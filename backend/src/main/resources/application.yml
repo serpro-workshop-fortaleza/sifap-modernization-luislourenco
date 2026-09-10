@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: sifap-backend
+  datasource:
+    url: ${SIFAP_DB_URL:jdbc:postgresql://localhost:5432/sifap}
+    username: ${SIFAP_DB_USER:sifap}
+    password: ${SIFAP_DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 500
+        order_inserts: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+sifap:
+  remittance:
+    # ADR-004 - na execucao em sombra o arquivo e gerado e NAO transmitido.
+    output-directory: ${SIFAP_REMITTANCE_DIR:./remittance}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    br.gov.sifap: INFO

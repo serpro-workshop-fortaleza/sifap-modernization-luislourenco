@@ -1,0 +1,105 @@
+name: Segurança
+
+# Portões de segurança do Estágio 4 — issue #4.
+# Separado de `ci.yml` porque a cadência é diferente: CodeQL também roda agendado,
+# para pegar vulnerabilidade divulgada depois que o código já foi integrado.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Segunda-feira 06:00 UTC, antes do horário comercial no Brasil.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # CodeQL não entra aqui: o repositório usa o "default setup" de code scanning, e o
+  # GitHub recusa o SARIF de configuração avançada enquanto ele estiver ligado
+  # ("CodeQL analyses from advanced configurations cannot be processed when the
+  # default setup is enabled"). Um job permanentemente vermelho é pior que nenhum.
+  # Reconciliação pendente na issue #10 — exige permissão de admin.
+
+  dependency-review:
+    name: Revisão de dependências
+    # Só existe diff de dependências em pull request.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Revisar dependências novas
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          config-file: .github/dependency-review-config.yml
+
+  secret-scan:
+    name: Varredura de segredos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      # A action oficial `gitleaks/gitleaks-action` exige licença paga em organizações.
+      # O binário é MIT e não tem essa restrição, então instalamos com checksum verificado.
+      GITLEAKS_VERSION: "8.30.1"
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # `fetch-depth: 0` para varrer o histórico, não apenas a árvore atual:
+          # um segredo removido em commit posterior continua vazado.
+          fetch-depth: 0
+
+      - name: Instalar gitleaks
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "$archive" gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+
+      - name: Procurar segredos no histórico
+        run: |
+          set -euo pipefail
+          gitleaks git --redact --verbose --exit-code 1
+
+  terraform-security:
+    name: Análise estática de IaC
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Executar Checkov
+        uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 # v12
+        with:
+          directory: infra
+          framework: terraform
+          quiet: true
+          # Falha o job; o SARIF continua sendo publicado pelo passo seguinte.
+          soft_fail: false
+          output_format: cli,sarif
+          output_file_path: console,checkov.sarif
+
+      - name: Publicar resultado no Security
+        # `always()` para que a constatação apareça na aba Security mesmo com o job vermelho.
+        if: always()
+        uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3
+        with:
+          sarif_file: checkov.sarif
+          category: checkov

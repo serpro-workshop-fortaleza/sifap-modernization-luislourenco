@@ -940,7 +940,8 @@ EVENT_TERM_RE = re.compile(r"hackath?ons?|workshops?", re.IGNORECASE)
 # aplicada ao laboratório.
 EVENT_TERM_ALLOWED_RE = re.compile(
     r"workshop-gbb|software-gbb-workshops|workshop-datacorp|"
-    r"workshop-legacy-modernization|team=workshop-XX"
+    r"workshop-legacy-modernization|team=workshop-XX|"
+    r"serpro-workshop-fortaleza"
 )
 STALE_RE = re.compile("|".join(re.escape(name) for name in STALE_PATHS))
 
