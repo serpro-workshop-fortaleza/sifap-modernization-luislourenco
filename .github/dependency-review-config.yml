@@ -1,0 +1,14 @@
+# Configuração da actions/dependency-review-action — issue #4.
+# Bloqueia a entrada de dependência vulnerável ou com licença incompatível.
+fail-on-severity: high
+
+# Licenças incompatíveis com software do governo federal distribuído pela União.
+# AGPL e SSPL impõem obrigações de disponibilização de código que não foram
+# avaliadas pelo jurídico; até que sejam, a entrada é bloqueada.
+deny-licenses:
+  - AGPL-1.0-or-later
+  - AGPL-3.0-or-later
+  - SSPL-1.0
+
+# A atualização de dependência passa por revisão humana; ver a restrição da issue #4.
+comment-summary-in-pr: on-failure

@@ -54,6 +54,11 @@ module "postgresql" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "main" {
+  # Purge protection fica ligada somente em prd: em dev ela impede recriar o cofre
+  # com o mesmo nome por 90 dias, o que inviabiliza destruir e recriar o ambiente.
+  #checkov:skip=CKV_AZURE_42:Recuperabilidade garantida em prd por purge_protection_enabled e soft delete de 90 dias.
+  #checkov:skip=CKV_AZURE_110:Condicional por ambiente; ver purge_protection_enabled abaixo.
+  #checkov:skip=CKV2_AZURE_32:Private endpoint exige VNet dedicada, fora do recorte 001. Issue #8.
   name                       = "kv-${local.name_prefix}-${random_string.suffix.result}"
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location

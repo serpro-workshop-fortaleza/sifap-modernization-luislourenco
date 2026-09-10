@@ -22,6 +22,7 @@ resource "random_password" "administrator" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
+  #checkov:skip=CKV2_AZURE_57:Acesso privado via delegated_subnet_id quando allowed_subnet_id e informado. O recorte 001 nao provisiona VNet. Issue #8.
   name                = "psql-${var.name_prefix}"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -104,6 +105,9 @@ resource "azurerm_postgresql_flexible_server_configuration" "log_min_duration" {
 }
 
 resource "azurerm_key_vault_secret" "administrator_password" {
+  # Sem rotacao automatica, uma data de expiracao derruba a aplicacao no vencimento.
+  # A expiracao entra junto com a rotacao, nao antes dela.
+  #checkov:skip=CKV_AZURE_41:Expiracao depende de rotacao automatizada, ainda nao implementada. Issue #9.
   name         = "psql-administrator-password"
   value        = random_password.administrator.result
   key_vault_id = var.key_vault_id
@@ -112,6 +116,7 @@ resource "azurerm_key_vault_secret" "administrator_password" {
 }
 
 resource "azurerm_key_vault_secret" "jdbc_url" {
+  #checkov:skip=CKV_AZURE_41:URL de conexao sem credencial; expira junto com a rotacao da senha. Issue #9.
   name         = "psql-jdbc-url"
   value        = "jdbc:postgresql://${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.sifap.name}?sslmode=require"
   key_vault_id = var.key_vault_id
