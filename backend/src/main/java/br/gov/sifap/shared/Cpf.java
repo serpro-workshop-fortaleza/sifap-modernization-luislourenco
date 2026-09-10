@@ -3,8 +3,10 @@ package br.gov.sifap.shared;
 /**
  * CPF sem mascara, com 11 posicoes.
  *
- * <p>REQ-006 — validacao por modulo 11 antes de qualquer calculo
- * ({@code SUBVALCP.NSN:70-80}).
+ * <p>REQ-006 — validacao por modulo 11 antes de qualquer calculo. O algoritmo reproduz
+ * a rotina {@code VALID-CPF-STANDARD} do copycode {@code CCVALCPF.NSC:92-128}, declarada
+ * padrao corporativo NT-SUPDE-014 ({@code CCVALCPF.NSC:9}). O acervo legado tem outras
+ * tres implementacoes divergentes; ver ADR-005 para a escolha da variante canonica.
  *
  * <p>REQ-031 — {@link #masked()} e a unica forma de expor o documento em log,
  * relatorio ou mensagem de erro. {@link #toString()} tambem mascara, para que um
@@ -33,10 +35,11 @@ public final class Cpf {
             throw new InvalidCpfException(Reason.NON_NUMERIC);
         }
         if (hasAllDigitsEqual(candidate)) {
-            // REQ-007 (bloqueado por SIFAP-M-14): VALBENEF.NSN:239-242 aceita sequencias
-            // iniciadas em 000 como "CPF de teste de governo"; SUBVALCP.NSN:57-60 rejeita.
-            // Adotamos a regra restritiva de SUBVALCP, que e a rotina declarada como fonte
-            // unica. Reverter e trocar esta condicao — nao ha outra dependencia.
+            // REQ-007 (bloqueado por SIFAP-M-14): quatro rotinas legadas discordam aqui.
+            // CCVALCPF.NSC:79-90 rejeita sempre; VALBENEF.NSN:238-242 abre excecao para
+            // sequencias iniciadas em 000; CADBENEF.NSP:344-413 e VALDOCS.NSP:137-199 nao
+            // verificam. Adotamos a rotina padrao (ADR-005, status Proposta), que e a mais
+            // restritiva. Reverter e trocar esta condicao — nao ha outra dependencia.
             throw new InvalidCpfException(Reason.ALL_DIGITS_EQUAL);
         }
         if (!hasValidCheckDigits(candidate)) {
@@ -61,6 +64,9 @@ public final class Cpf {
         for (int position = 0; position < upToPosition; position++) {
             sum += digitAt(candidate, position) * weight--;
         }
+        // Resto inteiro, como o DIVIDE ... REMAINDER de CCVALCPF.NSC:99-100. As copias
+        // inline usam #SUM - ((#SUM / 11) * 11), cuja equivalencia depende da precisao
+        // intermediaria do Natural e segue como questao aberta no ADR-005.
         int remainder = sum % 11;
         return remainder < 2 ? 0 : 11 - remainder;
     }

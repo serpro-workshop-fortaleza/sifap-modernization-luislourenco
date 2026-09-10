@@ -48,13 +48,42 @@ class CpfTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"00000791970", "00001583808", "00047514000"})
+    @DisplayName("REQ-006 - resto da divisao por 11 menor que 2 produz digito verificador 0")
+    void should_accept_cpf_when_check_digit_is_zero(String raw) {
+        // Ramo IF #CPF-REMAIN < 2 de CCVALCPF.NSC:101-105 e :121-125. Os tres casos cobrem
+        // digito zero no primeiro, no segundo e em ambos os verificadores.
+        assertThat(Cpf.of(raw).unmasked()).isEqualTo(raw);
+    }
+
+    @Test
+    @DisplayName("REQ-006 - o primeiro verificador usa pesos 10 a 2 sobre os 9 primeiros digitos")
+    void should_reject_cpf_when_first_check_digit_diverges() {
+        // 52998224725 e valido; alterar so a decima posicao isola o primeiro verificador.
+        assertThatThrownBy(() -> Cpf.of("52998224715"))
+                .isInstanceOf(Cpf.InvalidCpfException.class)
+                .extracting(ex -> ((Cpf.InvalidCpfException) ex).reason())
+                .isEqualTo(Cpf.Reason.CHECK_DIGIT);
+    }
+
+    @Test
+    @DisplayName("REQ-006 - o segundo verificador usa pesos 11 a 2 sobre os 10 primeiros digitos")
+    void should_reject_cpf_when_second_check_digit_diverges() {
+        // Mantem o primeiro verificador correto e altera so a decima primeira posicao.
+        assertThatThrownBy(() -> Cpf.of("52998224724"))
+                .isInstanceOf(Cpf.InvalidCpfException.class)
+                .extracting(ex -> ((Cpf.InvalidCpfException) ex).reason())
+                .isEqualTo(Cpf.Reason.CHECK_DIGIT);
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"00000000000", "11111111111", "99999999999"})
     @DisplayName("REQ-007 - rejeita CPF com todos os digitos iguais")
     void should_reject_cpf_when_all_digits_are_equal(String raw) {
-        // BLOQUEADO por SIFAP-M-14: VALBENEF.NSN:239-242 aceita sequencias iniciadas em 000
-        // como "CPF de teste de governo". Adotamos a regra restritiva de SUBVALCP.NSN:57-60.
-        // Se a Coordenacao de Beneficios confirmar a excecao, este teste muda junto com a
-        // condicao em Cpf.of.
+        // BLOQUEADO por SIFAP-M-14: quatro rotinas legadas discordam. Adotamos a regra
+        // restritiva de CCVALCPF.NSC:79-90 (ADR-005, status Proposta). Se a Coordenacao de
+        // Beneficios confirmar a excecao de VALBENEF.NSN:238-242, este teste muda junto com
+        // a condicao em Cpf.of.
         assertThatThrownBy(() -> Cpf.of(raw))
                 .isInstanceOf(Cpf.InvalidCpfException.class)
                 .extracting(ex -> ((Cpf.InvalidCpfException) ex).reason())

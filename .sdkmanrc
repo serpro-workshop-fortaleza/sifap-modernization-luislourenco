@@ -1,0 +1,5 @@
+# JDK alvo do backend (pom.xml: java.version 21).
+# Rode `sdk env` na raiz do repositorio antes de `./mvnw verify`.
+# O JDK padrao do container e o 25, no qual o Mockito 5.11 do Spring Boot 3.3
+# nao consegue instrumentar classes e 15 testes falham.
+java=21.0.12+1-ms
