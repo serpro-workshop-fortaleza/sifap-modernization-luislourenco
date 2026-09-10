@@ -69,7 +69,7 @@ Aponte: **`Failed: 0, Skipped: 6`** — e abra um `#checkov:skip` para mostrar q
 
 **Fala:** o valor do estágio não é o que ficou pronto, é saber com precisão o que falta e de quem depende.
 
-### Plano alternativo
+### Se o build falhar ao vivo
 
 Se o build ao vivo falhar, use `sdk env` antes — o JDK padrão do container é o 25 e o projeto exige o 21. Se ainda assim falhar, mostre a execução verde do CI em Actions em vez de improvisar.
 
